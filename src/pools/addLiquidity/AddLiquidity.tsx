@@ -4,13 +4,20 @@ import { ArrowLeft, Info, Minus, Plus, TrendingUp } from "lucide-react"
 import { pools, formatCurrency } from "@/lib/data"
 import BackgroundGlow from "@/global/BackgroundGlow"
 import Navbar from "@/global/Navbar"
-import { Link, useSearchParams } from "react-router-dom"
+import { Link, useParams, useSearchParams } from "react-router-dom"
 import { Slider } from "@radix-ui/react-slider"
+import { useAddLiquidity } from "@/program-hooks/addLiquidity"
+import { useGetSinglePool } from "@/program-hooks/getPools"
 
 export default function AddLiquidityPage() {
-  const [searchParams] = useSearchParams()
-  const poolId = searchParams.get("pool") || "eth-usdc"
-  const pool = pools.find((p) => p.id === poolId) || pools[0]
+   const {poolId} = useParams();
+    console.log(poolId)
+    const {data:pool} = useGetSinglePool(poolId);
+    console.log(pool)
+  const {addNewLiquidity, isPending} = useAddLiquidity();
+  // const [searchParams] = useSearchParams()
+  // const poolId = searchParams.get("pool") || "eth-usdc"
+  // const pool = pools.find((p) => p.id === poolId) || pools[0]
 
   const [amount0, setAmount0] = useState("")
   const [amount1, setAmount1] = useState("")
@@ -18,16 +25,16 @@ export default function AddLiquidityPage() {
   const [maxPrice, setMaxPrice] = useState(2100)
   const [priceRange, setPriceRange] = useState([1700, 2100])
 
-  const currentPrice = pool.token0.price
-  const isFullRange = minPrice <= currentPrice * 0.5 && maxPrice >= currentPrice * 1.5
+  const currentPrice = pool?.reserves.formattedBalanceA
+  const isFullRange = minPrice <= Number(currentPrice) * 0.5 && maxPrice >= Number(currentPrice) * 1.5
 
   // Sync amount1 based on amount0 and current price ratio
   useEffect(() => {
     if (amount0 && !isNaN(Number.parseFloat(amount0))) {
-      const ratio = pool.token1.price / pool.token0.price
-      setAmount1((Number.parseFloat(amount0) * currentPrice).toFixed(2))
+      const ratio = Number(pool?.tokenA.supply) / Number(pool?.tokenB.supply)
+      setAmount1((Number.parseFloat(amount0) * Number(currentPrice)).toFixed(2))
     }
-  }, [amount0, currentPrice, pool.token1.price, pool.token0.price])
+  }, [amount0, currentPrice, pool?.tokenA.supply, pool?.tokenB.supply])
 
   const handleRangeChange = (values: number[]) => {
     setPriceRange(values)
@@ -36,6 +43,28 @@ export default function AddLiquidityPage() {
   }
 
   const isComplete = amount0 && amount1 && Number.parseFloat(amount0) > 0
+  if (!pool) {
+      return (
+        <main className="relative min-h-screen">
+          <BackgroundGlow />
+        <Navbar />
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <p className="text-center text-muted-foreground">Pool not found</p>
+          </div>
+        </main>
+      )
+    }
+  const handleAddLiquidity = () => {
+    addNewLiquidity({
+      max_amount_a:Number(amount0),
+      max_amount_b:Number(amount1),
+      min_lp_tokens:minPrice,
+      mint_a:pool?.mintA,
+      mint_b:pool?.mintB,
+    })
+  }
+
+  
 
   return (
     <main className="relative min-h-screen">
@@ -54,7 +83,7 @@ export default function AddLiquidityPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Add Liquidity</h1>
             <p className="text-sm text-muted-foreground">
-              {pool.token0.symbol}/{pool.token1.symbol} · 0.3% fee tier
+              {pool?.tokenA.symbol}/{pool?.tokenB.symbol} · 0.3% fee tier
             </p>
           </div>
         </div>
@@ -64,20 +93,20 @@ export default function AddLiquidityPage() {
           <div className="flex items-center gap-3">
             <div className="flex -space-x-2">
               <span className="text-xl w-8 h-8 flex items-center justify-center rounded-full bg-secondary">
-                {pool.token0.icon}
+               <img src= {pool?.tokenA.logoURI} alt="icon" />
               </span>
               <span className="text-xl w-8 h-8 flex items-center justify-center rounded-full bg-secondary">
-                {pool.token1.icon}
+                <img src= {pool?.tokenB.logoURI} alt="icon" />
               </span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Pool TVL</p>
-              <p className="font-semibold text-foreground">{formatCurrency(pool.tvl)}</p>
+              <p className="font-semibold text-foreground">{Number(pool?.tvl)}</p>
             </div>
           </div>
           <div className="flex items-center gap-1 text-emerald-400 text-sm">
             <TrendingUp className="w-4 h-4" />
-            <span>{pool.apr.toFixed(1)}% APR</span>
+            <span>{pool?.apr.toFixed(1)}% APR</span>
           </div>
         </div>
 
@@ -91,7 +120,7 @@ export default function AddLiquidityPage() {
             <div className="glass-light rounded-2xl p-4 mb-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">Amount</span>
-                <span className="text-sm text-muted-foreground">Balance: {pool.token0.balance}</span>
+                <span className="text-sm text-muted-foreground">Balance: {pool?.reserves.formattedBalanceA}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <input
@@ -103,8 +132,10 @@ export default function AddLiquidityPage() {
                   className="flex-1 bg-transparent text-2xl font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
                 />
                 <div className="flex items-center gap-2 bg-secondary/80 px-3 py-2 rounded-2xl">
-                  <span className="text-xl">{pool.token0.icon}</span>
-                  <span className="font-semibold text-foreground">{pool.token0.symbol}</span>
+                  <span className="text-xl">
+                    <img src={pool?.tokenA.logoURI} alt="icon" />
+                  </span>
+                  <span className="font-semibold text-foreground">{pool?.tokenB.symbol}</span>
                 </div>
               </div>
             </div>
@@ -113,7 +144,7 @@ export default function AddLiquidityPage() {
             <div className="glass-light rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">Amount</span>
-                <span className="text-sm text-muted-foreground">Balance: {pool.token1.balance}</span>
+                <span className="text-sm text-muted-foreground">Balance: {pool?.reserves.formattedBalanceB}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <input
@@ -125,8 +156,10 @@ export default function AddLiquidityPage() {
                   className="flex-1 bg-transparent text-2xl font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
                 />
                 <div className="flex items-center gap-2 bg-secondary/80 px-3 py-2 rounded-2xl">
-                  <span className="text-xl">{pool.token1.icon}</span>
-                  <span className="font-semibold text-foreground">{pool.token1.symbol}</span>
+                  <span className="text-xl">
+                    <img src={pool?.tokenB.logoURI} alt="icon" />
+                  </span>
+                  <span className="font-semibold text-foreground">{pool?.tokenB.symbol}</span>
                 </div>
               </div>
             </div>
@@ -155,7 +188,7 @@ export default function AddLiquidityPage() {
             <div className="glass-light rounded-xl p-3 mb-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">Current price</p>
               <p className="text-lg font-semibold text-foreground">
-                {currentPrice.toLocaleString()} {pool.token1.symbol} per {pool.token0.symbol}
+                {(currentPrice?.toLocaleString())} {pool?.tokenB.symbol} per {pool?.tokenA.symbol}
               </p>
             </div>
 
@@ -208,7 +241,7 @@ export default function AddLiquidityPage() {
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground text-center mt-1">
-                  {pool.token1.symbol} per {pool.token0.symbol}
+                  {pool?.tokenB.symbol} per {pool?.tokenA.symbol}
                 </p>
               </div>
 
@@ -247,7 +280,7 @@ export default function AddLiquidityPage() {
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground text-center mt-1">
-                  {pool.token1.symbol} per {pool.token0.symbol}
+                  {pool?.tokenB.symbol} per {pool?.tokenA.symbol}
                 </p>
               </div>
             </div>
@@ -259,7 +292,7 @@ export default function AddLiquidityPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Estimated APR</span>
                 <span className="text-emerald-400 font-medium">
-                  {(pool.apr * (isFullRange ? 0.8 : 1.2)).toFixed(1)}%
+                  {(Number(pool?.apr) * (isFullRange ? 0.8 : 1.2)).toFixed(1)}%
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -273,7 +306,7 @@ export default function AddLiquidityPage() {
                 <span className="text-foreground">
                   ~$
                   {(
-                    (Number.parseFloat(amount0) || 0) * currentPrice +
+                    (Number.parseFloat(amount0) || 0) * Number(currentPrice) +
                     (Number.parseFloat(amount1) || 0)
                   ).toLocaleString()}
                 </span>
@@ -282,12 +315,20 @@ export default function AddLiquidityPage() {
           )}
 
           {/* Add button */}
-          <Button
+          {isPending ? 
+           <Button
+            disabled={!isPending}
+            className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl disabled:opacity-50"
+          >
+            Adding Liquidity....
+          </Button>
+          :
+           <Button
             disabled={!isComplete}
             className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl disabled:opacity-50"
           >
             {!amount0 ? "Enter an amount" : "Add Liquidity"}
-          </Button>
+          </Button>}
         </div>
       </div>
     </main>

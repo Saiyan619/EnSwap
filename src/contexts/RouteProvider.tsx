@@ -19,7 +19,7 @@ const routes: RouteObject[] = [
     path: "/pool/initialize",
     element: <CreatePoolPage />, 
   },{
-    path: "/pool/add",
+    path: "/pool/add/:poolId",
     element: <AddLiquidityPage />, 
   },{
     path: "/pool/withdraw",

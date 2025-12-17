@@ -167,9 +167,79 @@ export const useGetSinglePool = (poolId:string | undefined) => {
       const program = new Program<EnswapAmm>(idl as EnswapAmm, provider)
       const poolPubKey = new PublicKey(poolId);
       const poolData = await program.account.pool.fetch(poolPubKey);
+      // Get token list once
+      const tokenProvider = await new TokenListProvider().resolve();
+      const tokenMap = tokenProvider
+        .filterByClusterSlug("devnet")
+        .getList()
+        .reduce((map, item) => {
+          map.set(item.address, item);
+          return map;
+        }, new Map<string, TokenInfo>());
 
-      console.log(poolData);
-      return poolData;
+         const mintA = poolData.mintA
+         const mintB = poolData.mintB
+
+          const tokenAInfo = tokenMap.get(mintA.toString());
+          const tokenBInfo = tokenMap.get(mintB.toString());
+
+           // Get mint details for decimals
+          const [mintAData, mintBData] = await Promise.all([
+            getMint(connection, mintA),
+            getMint(connection, mintB),
+          ]);
+
+          // Get reserve balances for both tokens
+          const [balanceA, balanceB] = await Promise.all([
+            getReserveBalance(connection, poolData.tokenReserveA),
+            getReserveBalance(connection, poolData.tokenReserveB),
+          ]);
+
+          
+          // Calculate TVL (Total Value Locked)
+          // Note: This assumes 1:1 USD value for simplicity
+          // In real app, you'd fetch token prices from an oracle
+          const formattedBalanceA = balanceA / Math.pow(10, mintAData.decimals);
+          const formattedBalanceB = balanceB / Math.pow(10, mintBData.decimals);
+          
+          // Mock TVL calculation (simplified)
+          const tvl = formattedBalanceA + formattedBalanceB; // Would need actual prices
+
+          const enrichedPool = {
+            ...poolData,
+            tokenA: {
+              mint: mintA,
+              decimals: mintAData.decimals,
+              supply: mintAData.supply.toString(),
+              symbol: tokenAInfo?.symbol || "UNKNOWN",
+              name: tokenAInfo?.name || "Unknown Token",
+              logoURI: tokenAInfo?.logoURI,
+            },
+            tokenB: {
+              mint: mintB,
+              decimals: mintBData.decimals,
+              supply: mintBData.supply.toString(),
+              symbol: tokenBInfo?.symbol || "UNKNOWN",
+              name: tokenBInfo?.name || "Unknown Token",
+              logoURI: tokenBInfo?.logoURI,
+            },
+            reserves: {
+              balanceA,
+              balanceB,
+              formattedBalanceA,
+              formattedBalanceB,
+              reserveAAddress: poolData.tokenReserveA.toString(),
+              reserveBAddress: poolData.tokenReserveB.toString(),
+            },
+            tvl,
+            // Mock data for UI (Gotta find where to get real data for devnet token to replace later)
+            volume24h: Math.random() * 50000000,
+            fees24h: Math.random() * 50000,
+            apr: Math.random() * 50 + 5, // 5-55% APR
+          }
+
+          console.log(enrichedPool);
+          return enrichedPool;
       } catch (error) {
         console.error(error)
         throw error
