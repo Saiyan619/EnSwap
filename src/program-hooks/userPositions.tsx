@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { 
-  getAccount, 
-  getAssociatedTokenAddressSync, 
+import {
+  getAccount,
+  getAssociatedTokenAddressSync,
   getMint,
-  TOKEN_PROGRAM_ID 
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { EnswapAmm } from "@/idlTypes/enswapType";
@@ -31,11 +31,11 @@ export interface UserPosition {
     decimals: number;
     logoURI: string;
   };
-  lpTokenBalance: number;        
-  lpTokenBalanceRaw: bigint;   
-  shareOfPool: number;           // Percentage (0-100)
-  totalLpSupply: number;         
-  feeTier: number;               // Fee in basis points 
+  lpTokenBalance: number;
+  lpTokenBalanceRaw: bigint;
+  shareOfPool: number; // Percentage (0-100)
+  totalLpSupply: number;
+  feeTier: number; // Fee in basis points
 }
 
 export const useUserPositions = () => {
@@ -73,12 +73,13 @@ export const useUserPositions = () => {
       // 2. For each pool, check if user has LP tokens
       for (const poolData of allPools) {
         const pool = poolData.account;
-        
+
         try {
           // Get LP mint info (for total supply and decimals)
           const lpMintInfo = await getMint(connection, pool.lpMint);
           const lpDecimals = lpMintInfo.decimals;
-          const totalLpSupply = Number(lpMintInfo.supply) / Math.pow(10, lpDecimals);
+          const totalLpSupply =
+            Number(lpMintInfo.supply) / Math.pow(10, lpDecimals);
 
           // Derive user's LP token account address
           const userLpTokenAccount = getAssociatedTokenAddressSync(
@@ -89,7 +90,10 @@ export const useUserPositions = () => {
           );
 
           // Try to fetch user's LP token account
-          const lpTokenAccount = await getAccount(connection, userLpTokenAccount);
+          const lpTokenAccount = await getAccount(
+            connection,
+            userLpTokenAccount
+          );
           const lpBalanceRaw = lpTokenAccount.amount;
           const lpBalance = Number(lpBalanceRaw) / Math.pow(10, lpDecimals);
 
@@ -98,7 +102,9 @@ export const useUserPositions = () => {
             continue;
           }
 
-          console.log(`Position found in pool: ${poolData.publicKey.toString()}`);
+          console.log(
+            `Position found in pool: ${poolData.publicKey.toString()}`
+          );
           console.log(`LP Balance: ${lpBalance}`);
 
           // Get token decimals
@@ -164,7 +170,6 @@ export const useUserPositions = () => {
     refetchOnWindowFocus: true,
   });
 };
-
 
 // Hook to get a single position by pool ID
 export const useUserPosition = (poolId: string | undefined) => {

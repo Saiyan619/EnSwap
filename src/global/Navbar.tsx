@@ -1,16 +1,15 @@
-import { MoreHorizontal } from "lucide-react"
-import { Link } from "react-router-dom"
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui"
-import { Dropdown } from "./Dropdown"
+import { MoreHorizontal } from "lucide-react";
+import { Link } from "react-router-dom";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Dropdown } from "./Dropdown";
 
 const navItems = [
   { label: "Swap", href: "/" },
   { label: "Explore", href: "/explore" },
   { label: "Pool", href: "/pool" },
-]
+];
 
 export default function Navbar() {
-
   return (
     <header className="glass sticky top-0 z-50 px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -28,7 +27,9 @@ export default function Navbar() {
               <Link
                 key={item.label}
                 to={item.href}
-                className={"px-4 py-2 rounded-xl text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-secondary/50"}
+                className={
+                  "px-4 py-2 rounded-xl text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                }
               >
                 {item.label}
               </Link>
@@ -41,11 +42,14 @@ export default function Navbar() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-                  <WalletMultiButton />
+          <WalletMultiButton />
 
-         <div className="block sm:hidden"> <Dropdown /></div>
+          <div className="block sm:hidden">
+            {" "}
+            <Dropdown />
+          </div>
         </div>
       </div>
     </header>
-  )
+  );
 }

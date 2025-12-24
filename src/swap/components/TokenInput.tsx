@@ -1,18 +1,26 @@
-import { Token } from "@/lib/data"
-import { ChevronDown } from "lucide-react"
+import { Token } from "@/lib/data";
+import { ChevronDown } from "lucide-react";
 
 interface TokenInputProps {
-  label: string
-  token: Token
-  amount: string,
-  supply: string
-  mint: string,
-  onAmountChange: (value: string) => void
-  onTokenClick: () => void
-  readOnly?: boolean
+  label: string;
+  token: Token;
+  amount: string;
+  supply: string;
+  mint: string;
+  onAmountChange: (value: string) => void;
+  onTokenClick: () => void;
+  readOnly?: boolean;
 }
 
-export function TokenInput({ label, token, amount, mint, onAmountChange, onTokenClick, readOnly = false }: TokenInputProps) {
+export function TokenInput({
+  label,
+  token,
+  amount,
+  mint,
+  onAmountChange,
+  onTokenClick,
+  readOnly = false,
+}: TokenInputProps) {
   return (
     <div className="glass-light rounded-2xl p-4 hover:border-primary/30 transition-colors">
       <div className="flex items-center justify-between mb-2">
@@ -36,16 +44,20 @@ export function TokenInput({ label, token, amount, mint, onAmountChange, onToken
         >
           <span className="text-xl">
             <img className="w-8" src={token?.logoURI} alt="icon" />
-            </span>
+          </span>
           <span className="font-semibold text-foreground">{token?.symbol}</span>
           <ChevronDown className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
       {amount && (
         <div className="mt-2 text-sm text-muted-foreground">
-          ~${(Number.parseFloat(amount || "0") * (token?.symbol === "ETH" ? 1850 : 1)).toLocaleString()}
+          ~$
+          {(
+            Number.parseFloat(amount || "0") *
+            (token?.symbol === "ETH" ? 1850 : 1)
+          ).toLocaleString()}
         </div>
       )}
     </div>
-  )
+  );
 }

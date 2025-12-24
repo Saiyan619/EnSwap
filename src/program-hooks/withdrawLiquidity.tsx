@@ -7,9 +7,7 @@ import {
 import { PublicKey } from "@solana/web3.js";
 import { EnswapAmm } from "@/idlTypes/enswapType";
 import idl from "@/idl/enswap.json";
-import {
-  getMint,
-} from "@solana/spl-token";
+import { getMint } from "@solana/spl-token";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -46,7 +44,7 @@ export const useWithdrawLiquidity = () => {
       const mintBPubkey = new PublicKey(mint_b);
 
       const mintAInfo = await getMint(connection, mintAPubkey);
-            const mintBInfo = await getMint(connection, mintBPubkey);
+      const mintBInfo = await getMint(connection, mintBPubkey);
       const decimalsA = mintAInfo.decimals;
       const decimalsB = mintBInfo.decimals;
       const rawAmountA = Math.floor(min_amount_a * Math.pow(10, decimalsA));
@@ -56,7 +54,6 @@ export const useWithdrawLiquidity = () => {
         [Buffer.from("pool"), mintAPubkey.toBuffer(), mintBPubkey.toBuffer()],
         programId
       );
-
 
       const [reserveAPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("reserve_a"), poolPDA.toBuffer()],
@@ -72,11 +69,11 @@ export const useWithdrawLiquidity = () => {
         [Buffer.from("lp_mint"), poolPDA.toBuffer()],
         programId
       );
-// After getting decimals for A and B, also get LP mint decimals:
-const lpMintInfo = await getMint(connection, lpMintPDA);
-const lpDecimals = lpMintInfo.decimals;
+      // After getting decimals for A and B, also get LP mint decimals:
+      const lpMintInfo = await getMint(connection, lpMintPDA);
+      const lpDecimals = lpMintInfo.decimals;
 
-const rawLpTokens = Math.floor(lp_tokens * Math.pow(10, lpDecimals));
+      const rawLpTokens = Math.floor(lp_tokens * Math.pow(10, lpDecimals));
       const tx = program.methods
         .withdrawLiquidity(
           new BN(rawLpTokens),
@@ -89,26 +86,31 @@ const rawLpTokens = Math.floor(lp_tokens * Math.pow(10, lpDecimals));
           reserveA: reserveAPDA,
           reserveB: reserveBPDA,
           signer: publicKey,
-        }).rpc();
-        return tx;
+        })
+        .rpc();
+      return tx;
     } catch (error) {
       throw error;
     }
   };
-  const {mutateAsync:withdrawNewLiquidity, isPending} = useMutation({
-     mutationFn: withdrawLiquidity,
+  const { mutateAsync: withdrawNewLiquidity, isPending } = useMutation({
+    mutationFn: withdrawLiquidity,
     onSuccess: (data) => {
       toast.success("Funds Withdrawn Successfully!", {
         description: `Transaction: ${data}`,
         action: {
           label: "View on Explorer",
-          onClick: () => window.open(`https://explorer.solana.com/tx/${data}?cluster=devnet`, '_blank')
-        }
+          onClick: () =>
+            window.open(
+              `https://explorer.solana.com/tx/${data}?cluster=devnet`,
+              "_blank"
+            ),
+        },
       });
     },
     onError: (error: Error) => {
       toast.error(`Failed to Withdraw from pool: ${error.message}`);
-    }
-  })
-  return{withdrawNewLiquidity, isPending}
+    },
+  });
+  return { withdrawNewLiquidity, isPending };
 };

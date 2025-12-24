@@ -1,67 +1,65 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft, ChevronDown, Info, AlertCircle } from "lucide-react"
-import { Link } from "react-router-dom"
-import BackgroundGlow from "@/global/BackgroundGlow"
-import Navbar from "@/global/Navbar"
-import { TokenSelectModal } from "@/swap/components/TokenSelectModal"
-import { Token } from "@/lib/data"
-import { useInitializePool } from "@/program-hooks/initializePool"
-import { Spinner } from "@/components/ui/spinner"
-import { useAllTokens } from "@/program-hooks/allToken"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ChevronDown, Info, AlertCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import BackgroundGlow from "@/global/BackgroundGlow";
+import Navbar from "@/global/Navbar";
+import { TokenSelectModal } from "@/swap/components/TokenSelectModal";
+import { Token } from "@/lib/data";
+import { useInitializePool } from "@/program-hooks/initializePool";
+import { Spinner } from "@/components/ui/spinner";
+import { useAllTokens } from "@/program-hooks/allToken";
 
 const feeTiers = [
   { value: 0.01, label: "0.01%", description: "Best for stable pairs" },
   { value: 0.05, label: "0.05%", description: "Best for stable pairs" },
   { value: 0.3, label: "0.3%", description: "Best for most pairs" },
   { value: 1, label: "1%", description: "Best for exotic pairs" },
-]
+];
 
 export default function CreatePoolPage() {
-  const {initializeNewPool, isPending} = useInitializePool();
-  const {tokens} = useAllTokens();
-  const [token0, setToken0] = useState<Token | null>(null)
-  const [token1, setToken1] = useState<Token | null>(null)
-  const [selectedFee, setSelectedFee] = useState(0.3)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectingFor, setSelectingFor] = useState<0 | 1>(0)
+  const { initializeNewPool, isPending } = useInitializePool();
+  const { tokens } = useAllTokens();
+  const [token0, setToken0] = useState<Token | null>(null);
+  const [token1, setToken1] = useState<Token | null>(null);
+  const [selectedFee, setSelectedFee] = useState(0.3);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectingFor, setSelectingFor] = useState<0 | 1>(0);
 
   const openTokenModal = (position: 0 | 1) => {
-    setSelectingFor(position)
-    setModalOpen(true)
-  }
+    setSelectingFor(position);
+    setModalOpen(true);
+  };
 
   const handleTokenSelect = (token: Token) => {
     if (selectingFor === 0) {
       if (token.symbol === token1?.symbol) {
-        setToken1(token0)
+        setToken1(token0);
       }
-      setToken0(token)
+      setToken0(token);
     } else {
       if (token.symbol === token0?.symbol) {
-        setToken0(token1)
+        setToken0(token1);
       }
-      setToken1(token)
+      setToken1(token);
     }
-    setModalOpen(false)
-  }
+    setModalOpen(false);
+  };
 
-  const isComplete = token0 && token1
+  const isComplete = token0 && token1;
 
-  const handleInitializePool = ()=>{
+  const handleInitializePool = () => {
     if (!token0?.mint || !token1?.mint) {
       throw new Error("token is not available!");
-      
     }
     const proposedPool = {
       mintAddA: token0?.mint.toString(),
       mintAddB: token1?.mint.toString(),
-      fee: selectedFee
-    }
+      fee: selectedFee,
+    };
 
     initializeNewPool(proposedPool);
-
-  }
+  };
 
   return (
     <main className="relative min-h-screen">
@@ -77,16 +75,21 @@ export default function CreatePoolPage() {
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-2xl font-bold text-foreground">Initialize New Pool</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            Initialize New Pool
+          </h1>
         </div>
 
         {/* Info banner */}
         <div className="glass-light rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm text-foreground font-medium mb-1">Creating a new pool</p>
+            <p className="text-sm text-foreground font-medium mb-1">
+              Creating a new pool
+            </p>
             <p className="text-sm text-muted-foreground">
-              This pool does not exist yet. You will be the first liquidity provider and will set the starting price.
+              This pool does not exist yet. You will be the first liquidity
+              provider and will set the starting price.
             </p>
           </div>
         </div>
@@ -95,7 +98,9 @@ export default function CreatePoolPage() {
         <div className="glass rounded-3xl p-6 space-y-6">
           {/* Select tokens */}
           <div>
-            <label className="text-sm text-muted-foreground mb-3 block">Select pair</label>
+            <label className="text-sm text-muted-foreground mb-3 block">
+              Select pair
+            </label>
             <div className="flex gap-3">
               <button
                 onClick={() => openTokenModal(0)}
@@ -106,7 +111,9 @@ export default function CreatePoolPage() {
                     <span className="text-xs">
                       <img className="w-8" src={token0.logoURI} alt="icon" />
                     </span>
-                    <span className="font-semibold text-foreground">{token0.symbol}</span>
+                    <span className="font-semibold text-foreground">
+                      {token0.symbol}
+                    </span>
                   </div>
                 ) : (
                   <span className="text-muted-foreground">Select token</span>
@@ -123,7 +130,9 @@ export default function CreatePoolPage() {
                     <span className="text-xs">
                       <img className="w-8" src={token1.logoURI} alt="icon" />
                     </span>
-                    <span className="font-semibold text-foreground">{token1.symbol}</span>
+                    <span className="font-semibold text-foreground">
+                      {token1.symbol}
+                    </span>
                   </div>
                 ) : (
                   <span className="text-muted-foreground">Select token</span>
@@ -145,37 +154,41 @@ export default function CreatePoolPage() {
                   key={tier.value}
                   onClick={() => setSelectedFee(tier.value)}
                   className={`glass-light rounded-xl p-4 text-left transition-all ${
-                    selectedFee === tier.value ? "border-primary bg-primary/10" : "hover:border-primary/30"
+                    selectedFee === tier.value
+                      ? "border-primary bg-primary/10"
+                      : "hover:border-primary/30"
                   }`}
                 >
-                  <div className="font-semibold text-foreground mb-1">{tier.label}</div>
-                  <div className="text-xs text-muted-foreground">{tier.description}</div>
+                  <div className="font-semibold text-foreground mb-1">
+                    {tier.label}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {tier.description}
+                  </div>
                 </button>
               ))}
             </div>
           </div>
 
-          {
-            isPending ?
-
-              <Button 
-           className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl disabled:opacity-50"
-          size="sm" variant="outline" disabled>
-      <Spinner />
-      Submit
-    </Button>
-             
-          :
-<Button
-          onClick={handleInitializePool}
-            disabled={!isComplete}
-            className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl disabled:opacity-50"
-          >
-            {!token0 || !token1 ? "Select tokens"  : "Initialize Pool"}
-          </Button>
-          }
-         
-        
+          {isPending ? (
+            <Button
+              className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl disabled:opacity-50"
+              size="sm"
+              variant="outline"
+              disabled
+            >
+              <Spinner />
+              Submit
+            </Button>
+          ) : (
+            <Button
+              onClick={handleInitializePool}
+              disabled={!isComplete}
+              className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl disabled:opacity-50"
+            >
+              {!token0 || !token1 ? "Select tokens" : "Initialize Pool"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -184,8 +197,10 @@ export default function CreatePoolPage() {
         onClose={() => setModalOpen(false)}
         tokens={tokens}
         onSelect={handleTokenSelect}
-        selectedToken={selectingFor === 0 ? token0 || tokens[0] : token1 || tokens[1]}
+        selectedToken={
+          selectingFor === 0 ? token0 || tokens[0] : token1 || tokens[1]
+        }
       />
     </main>
-  )
+  );
 }

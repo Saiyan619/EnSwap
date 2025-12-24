@@ -1,34 +1,47 @@
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
-import { Token } from "@/lib/data"
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { Token } from "@/lib/data";
 
 interface TokenSelectModalProps {
-  open: boolean
-  onClose: () => void
-  tokens: Token[]
-  onSelect: (token: Token) => void
-  selectedToken: Token
+  open: boolean;
+  onClose: () => void;
+  tokens: Token[];
+  onSelect: (token: Token) => void;
+  selectedToken: Token;
 }
 
-export function TokenSelectModal({ open, onClose, tokens, onSelect, selectedToken }: TokenSelectModalProps) {
-  const [search, setSearch] = useState("")
+export function TokenSelectModal({
+  open,
+  onClose,
+  tokens,
+  onSelect,
+  selectedToken,
+}: TokenSelectModalProps) {
+  const [search, setSearch] = useState("");
 
   const filteredTokens = tokens.filter(
     (token) =>
       token.symbol.toLowerCase().includes(search.toLowerCase()) ||
-      token.name.toLowerCase().includes(search.toLowerCase()),
-  )
+      token.name.toLowerCase().includes(search.toLowerCase())
+  );
 
-  const popularTokens = tokens.slice(0, 4)
+  const popularTokens = tokens.slice(0, 4);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="glass border-border/50 sm:max-w-md p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 pb-3 border-b border-border/50">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold text-foreground">Select a token</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-foreground">
+              Select a token
+            </DialogTitle>
             {/* <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
               <X className="w-5 h-5" />
             </button> */}
@@ -61,8 +74,10 @@ export function TokenSelectModal({ open, onClose, tokens, onSelect, selectedToke
               >
                 <span className="text-base">
                   <img className="w-8" src={token.logoURI} alt="icon" />
-                  </span>
-                <span className="text-sm font-medium text-foreground">{token.symbol}</span>
+                </span>
+                <span className="text-sm font-medium text-foreground">
+                  {token.symbol}
+                </span>
               </button>
             ))}
           </div>
@@ -77,16 +92,22 @@ export function TokenSelectModal({ open, onClose, tokens, onSelect, selectedToke
                 key={token.symbol}
                 onClick={() => onSelect(token)}
                 className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors ${
-                  selectedToken?.symbol === token?.symbol ? "bg-primary/10" : "hover:bg-secondary/50"
+                  selectedToken?.symbol === token?.symbol
+                    ? "bg-primary/10"
+                    : "hover:bg-secondary/50"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">
-                     <img className="w-8" src={token.logoURI} alt="icon" />
-                    </span>
+                    <img className="w-8" src={token.logoURI} alt="icon" />
+                  </span>
                   <div className="text-left">
-                    <div className="font-medium text-foreground">{token.symbol}</div>
-                    <div className="text-sm text-muted-foreground">{token.name}</div>
+                    <div className="font-medium text-foreground">
+                      {token.symbol}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {token.name}
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -105,5 +126,5 @@ export function TokenSelectModal({ open, onClose, tokens, onSelect, selectedToke
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
