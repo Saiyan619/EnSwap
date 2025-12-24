@@ -4,13 +4,11 @@ import {
   useConnection,
   useWallet,
 } from "@solana/wallet-adapter-react";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { EnswapAmm } from "@/idlTypes/enswapType";
 import idl from "@/idl/enswap.json";
 import {
-  getAssociatedTokenAddressSync,
   getMint,
-  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -59,19 +57,6 @@ export const useWithdrawLiquidity = () => {
         programId
       );
 
-      const userTokenA = await getAssociatedTokenAddressSync(
-        mintAPubkey,
-        publicKey,
-        false,
-        TOKEN_PROGRAM_ID
-      );
-
-      const userTokenB = await getAssociatedTokenAddressSync(
-        mintBPubkey,
-        publicKey,
-        false,
-        TOKEN_PROGRAM_ID
-      );
 
       const [reserveAPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("reserve_a"), poolPDA.toBuffer()],
@@ -92,11 +77,6 @@ const lpMintInfo = await getMint(connection, lpMintPDA);
 const lpDecimals = lpMintInfo.decimals;
 
 const rawLpTokens = Math.floor(lp_tokens * Math.pow(10, lpDecimals));
-      const [poolAuthorityPDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("authority"), poolPDA.toBuffer()],
-        programId
-      );
-
       const tx = program.methods
         .withdrawLiquidity(
           new BN(rawLpTokens),
@@ -106,27 +86,19 @@ const rawLpTokens = Math.floor(lp_tokens * Math.pow(10, lpDecimals));
         .accounts({
           mintA: mintAPubkey,
           mintB: mintBPubkey,
-          pool: poolPDA,
-          lpMint: lpMintPDA,
-          userTokenA: userTokenA,
-          userTokenB: userTokenB,
           reserveA: reserveAPDA,
           reserveB: reserveBPDA,
-          poolAuthority: poolAuthorityPDA,
           signer: publicKey,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
         }).rpc();
         return tx;
     } catch (error) {
       throw error;
     }
   };
-
   const {mutateAsync:withdrawNewLiquidity, isPending} = useMutation({
      mutationFn: withdrawLiquidity,
     onSuccess: (data) => {
-      toast.success("Pool Funded Successfully!", {
+      toast.success("Funds Withdrawn Successfully!", {
         description: `Transaction: ${data}`,
         action: {
           label: "View on Explorer",

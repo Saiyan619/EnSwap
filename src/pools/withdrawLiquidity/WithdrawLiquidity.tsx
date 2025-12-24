@@ -60,7 +60,7 @@ export default function WithdrawLiquidityPage() {
 
     const lpAmount = parseFloat(lpTokenAmount)
     // Calculate proportional share
-    const shareOfPool = lpAmount / Number(totalLpSupply)
+    // const shareOfPool = lpAmount / Number(totalLpSupply)
     // Estimated amounts user will receive
     const estimatedA = (lpAmount * pool.reserves.formattedBalanceA) / totalLpSupply
   const estimatedB = (lpAmount * pool.reserves.formattedBalanceB) / totalLpSupply

@@ -2,8 +2,7 @@ import { useAnchorWallet, useConnection, useWallet } from "@solana/wallet-adapte
 import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
 import idl from "@/idl/enswap.json";
 import { EnswapAmm } from "@/idlTypes/enswapType";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 interface initializePoolProp{
@@ -36,65 +35,19 @@ export const useInitializePool = () => {
         //convert poolrent when you want to display in any components - poolRent/1e9;
 
         const provider = new AnchorProvider(connection, wallet, {commitment:"confirmed"});
-        const programId = new PublicKey(idl.address);
-        console.log(programId.toBase58())
+        // const programId = new PublicKey(idl.address);
         const program = new Program<EnswapAmm>(idl as EnswapAmm, provider);
         const mintAddAKey = new PublicKey(mintAddA);
         const mintAddBKey = new PublicKey(mintAddB);
 
         try {
-            const [poolPDA] = PublicKey.findProgramAddressSync(
-            [
-                Buffer.from("pool"),
-                mintAddAKey.toBuffer(),
-                mintAddBKey.toBuffer()
-            ],
-            programId
-        )
-
-        const [lpMintPDA] = PublicKey.findProgramAddressSync(
-            [
-                Buffer.from("lp_mint"),
-                poolPDA.toBuffer()
-            ],
-            programId
-        )
-
-        const [tokenReserveAPDA] = PublicKey.findProgramAddressSync(
-            [
-                Buffer.from("reserve_a"),
-                poolPDA.toBuffer()
-            ],
-            programId
-        )
-        const [tokenReserveBPDA] = PublicKey.findProgramAddressSync(
-            [
-                Buffer.from("reserve_b"),
-                poolPDA.toBuffer()
-            ],
-            programId
-        )
-        const [poolAuthorityPDA] = PublicKey.findProgramAddressSync(
-            [
-                Buffer.from("authority"),
-                poolPDA.toBuffer()
-            ],
-            programId
-        )
 
         console.log("sending transaction to initialize.......");
 
         const tx = await program.methods.initializePool(new BN(feePercentToBps)).accounts({
             mintA: mintAddAKey,
             mintB: mintAddBKey,
-            pool: poolPDA,
-            lpMint: lpMintPDA,
-            tokenReserveA: tokenReserveAPDA,
-            tokenReserveB: tokenReserveBPDA,
-            poolAuthority: poolAuthorityPDA,
             signer: publicKey,
-            systemProgram: SystemProgram.programId,
-            tokenProgram: TOKEN_PROGRAM_ID
         }).rpc();
 
         return { tx, poolRent }

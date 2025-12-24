@@ -19,7 +19,7 @@ const feeTiers = [
 
 export default function CreatePoolPage() {
   const {initializeNewPool, isPending} = useInitializePool();
-  const {tokens, isLoading} = useAllTokens();
+  const {tokens} = useAllTokens();
   const [token0, setToken0] = useState<Token | null>(null)
   const [token1, setToken1] = useState<Token | null>(null)
   const [selectedFee, setSelectedFee] = useState(0.3)

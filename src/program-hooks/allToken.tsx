@@ -137,7 +137,7 @@ export function useSwapQuote(
     
     // Convert to strings for comparison
     const fromStr = fromMint.toString()
-    const toStr = toMint.toString()
+    // const toStr = toMint.toString()
     const poolMintA = pool.tokenA.mint.toString()
     
     // Determine direction

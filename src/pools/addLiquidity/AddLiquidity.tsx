@@ -20,8 +20,6 @@ export default function AddLiquidityPage() {
 
   const [amount0, setAmount0] = useState("")
   const [amount1, setAmount1] = useState("")
-  const [minPrice, setMinPrice] = useState(1700)
-  const [maxPrice, setMaxPrice] = useState(2100)
 const [selected, setSelected] = useState("0.5");
 
   const options = [
@@ -30,7 +28,7 @@ const [selected, setSelected] = useState("0.5");
     { id: 'high', title: 'High', desc: '1.0% slippage', percent: "1.0" },
   ];
   const currentPrice = pool?.reserves.formattedBalanceA
-  const isFullRange = minPrice <= Number(currentPrice) * 0.5 && maxPrice >= Number(currentPrice) * 1.5
+  const isFullRange = Number(amount0) <= Number(currentPrice) * 0.5 && Number(amount0) >= Number(currentPrice) * 1.5
 
   // Sync amount1 based on amount0 and current price ratio
   useEffect(() => {

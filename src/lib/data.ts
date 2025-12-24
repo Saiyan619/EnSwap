@@ -11,7 +11,6 @@ export interface Token {
   decimals: number
 }
 
-
 export interface Pool {
   id: string
   token0: Token
@@ -24,77 +23,66 @@ export interface Pool {
   myShare?: number
 }
 
-export const tokens: Token[] = [
-  { symbol: "USDT", name: "Tether coin", icon: "⟠", balance: "1.234", price: 1850, mint:"EJwZgeZrdC8TXTQbQBoL6bfuAnFUUy1PVCMB4DYPzVaS" },
-  { symbol: "USDC", name: "USD Coin", icon: "💲", balance: "5,000.00", price: 1, mint:"Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr" },
-  { symbol: "EURC", name: "EURO Coin", icon: "E", balance: "0.05", price: 43000, mint:"HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr" },
-  // { symbol: "DAI", name: "Dai Stablecoin", icon: "◈", balance: "2,500.00", price: 1 },
-  // { symbol: "LINK", name: "Chainlink", icon: "⬡", balance: "150.00", price: 14.5 },
-  // { symbol: "UNI", name: "Uniswap", icon: "🦄", balance: "75.00", price: 6.2 },
-  // { symbol: "AAVE", name: "Aave", icon: "👻", balance: "10.00", price: 92 },
-  // { symbol: "CRV", name: "Curve", icon: "🔄", balance: "500.00", price: 0.52 },
-]
-
-export const pools: Pool[] = [
-  {
-    id: "eth-usdc",
-    token0: tokens[0],
-    token1: tokens[1],
-    tvl: 245000000,
-    volume24h: 89000000,
-    fees24h: 267000,
-    apr: 24.5,
-    myLiquidity: 12500,
-    myShare: 0.005,
-  },
-  {
-    id: "wbtc-eth",
-    token0: tokens[1],
-    token1: tokens[0],
-    tvl: 180000000,
-    volume24h: 45000000,
-    fees24h: 135000,
-    apr: 18.2,
-    myLiquidity: 5000,
-    myShare: 0.003,
-  },
-  // {
-  //   id: "eth-dai",
-  //   token0: tokens[0],
-  //   token1: tokens[3],
-  //   tvl: 120000000,
-  //   volume24h: 32000000,
-  //   fees24h: 96000,
-  //   apr: 15.8,
-  // },
-  // {
-  //   id: "usdc-dai",
-  //   token0: tokens[1],
-  //   token1: tokens[3],
-  //   tvl: 95000000,
-  //   volume24h: 28000000,
-  //   fees24h: 14000,
-  //   apr: 5.2,
-  // },
-  // {
-  //   id: "link-eth",
-  //   token0: tokens[4],
-  //   token1: tokens[0],
-  //   tvl: 45000000,
-  //   volume24h: 12000000,
-  //   fees24h: 36000,
-  //   apr: 28.4,
-  // },
-  // {
-  //   id: "uni-eth",
-  //   token0: tokens[5],
-  //   token1: tokens[0],
-  //   tvl: 38000000,
-  //   volume24h: 9500000,
-  //   fees24h: 28500,
-  //   apr: 22.1,
-  // },
-]
+// export const pools: Pool[] = [
+//   {
+//     id: "eth-usdc",
+//     token0: tokens[0],
+//     token1: tokens[1],
+//     tvl: 245000000,
+//     volume24h: 89000000,
+//     fees24h: 267000,
+//     apr: 24.5,
+//     myLiquidity: 12500,
+//     myShare: 0.005,
+//   },
+//   {
+//     id: "wbtc-eth",
+//     token0: tokens[1],
+//     token1: tokens[0],
+//     tvl: 180000000,
+//     volume24h: 45000000,
+//     fees24h: 135000,
+//     apr: 18.2,
+//     myLiquidity: 5000,
+//     myShare: 0.003,
+//   },
+//   // {
+//   //   id: "eth-dai",
+//   //   token0: tokens[0],
+//   //   token1: tokens[3],
+//   //   tvl: 120000000,
+//   //   volume24h: 32000000,
+//   //   fees24h: 96000,
+//   //   apr: 15.8,
+//   // },
+//   // {
+//   //   id: "usdc-dai",
+//   //   token0: tokens[1],
+//   //   token1: tokens[3],
+//   //   tvl: 95000000,
+//   //   volume24h: 28000000,
+//   //   fees24h: 14000,
+//   //   apr: 5.2,
+//   // },
+//   // {
+//   //   id: "link-eth",
+//   //   token0: tokens[4],
+//   //   token1: tokens[0],
+//   //   tvl: 45000000,
+//   //   volume24h: 12000000,
+//   //   fees24h: 36000,
+//   //   apr: 28.4,
+//   // },
+//   // {
+//   //   id: "uni-eth",
+//   //   token0: tokens[5],
+//   //   token1: tokens[0],
+//   //   tvl: 38000000,
+//   //   volume24h: 9500000,
+//   //   fees24h: 28500,
+//   //   apr: 22.1,
+//   // },
+// ]
 
 export function formatCurrency(value: number): string {
   if (value >= 1000000000) {

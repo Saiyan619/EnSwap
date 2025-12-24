@@ -2,7 +2,7 @@ import { EnswapAmm } from "@/idlTypes/enswapType";
 import idl from "@/idl/enswap.json";
 import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
 import { useAnchorWallet, useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, getMint } from "@solana/spl-token";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -91,10 +91,6 @@ export const useSwap = () => {
             const tokenReserveSrcPDA = isDestMintA ? tokenReserveAPDA : tokenReserveBPDA;
             const tokenReserveDestPDA = isDestMintA ? tokenReserveBPDA : tokenReserveAPDA;
 
-            const [poolAuthorityPDA] = PublicKey.findProgramAddressSync(
-                [Buffer.from("authority"), poolPDA.toBuffer()],
-                programId
-            );
 
             console.log('Sending swap transaction...');
             console.log('==================');
@@ -104,15 +100,11 @@ export const useSwap = () => {
                 .accounts({
                     mintA: actualMintA,
                     mintB: actualMintB,
-                    pool: poolPDA,
                     userSrcTokenAcc: userSrcTokenAcc,
                     userDstTokenAcc: userDestTokenAcc,
                     tokenReserveSrc: tokenReserveSrcPDA,
                     tokenReserveDst: tokenReserveDestPDA,
-                    poolAuthority: poolAuthorityPDA,
                     signer: publicKey,
-                    systemProgram: SystemProgram.programId,
-                    tokenProgram: TOKEN_PROGRAM_ID
                 })
                 .rpc();
             return tx;

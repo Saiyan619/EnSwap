@@ -1,7 +1,5 @@
-import { useState } from "react"
-import { Wallet, Settings, MoreHorizontal } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 import { Link } from "react-router-dom"
-import { Button } from "@/components/ui/button"
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui"
 import { Dropdown } from "./Dropdown"
 
