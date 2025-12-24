@@ -49,17 +49,19 @@ export function TokenSelectModal({ open, onClose, tokens, onSelect, selectedToke
 
           {/* Popular tokens */}
           <div className="flex flex-wrap gap-2">
-            {popularTokens.map((token) => (
+            {popularTokens?.map((token) => (
               <button
                 key={token.symbol}
                 onClick={() => onSelect(token)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors ${
-                  selectedToken.symbol === token.symbol
+                  selectedToken?.symbol === token?.symbol
                     ? "border-primary bg-primary/10"
                     : "border-border/50 hover:border-primary/30 bg-secondary/30"
                 }`}
               >
-                <span className="text-base">{token.icon}</span>
+                <span className="text-base">
+                  <img className="w-8" src={token.logoURI} alt="icon" />
+                  </span>
                 <span className="text-sm font-medium text-foreground">{token.symbol}</span>
               </button>
             ))}
@@ -70,30 +72,32 @@ export function TokenSelectModal({ open, onClose, tokens, onSelect, selectedToke
 
           {/* Token list */}
           <div className="space-y-1 max-h-72 overflow-y-auto -mx-4 px-4">
-            {filteredTokens.map((token) => (
+            {filteredTokens?.map((token) => (
               <button
                 key={token.symbol}
                 onClick={() => onSelect(token)}
                 className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors ${
-                  selectedToken.symbol === token.symbol ? "bg-primary/10" : "hover:bg-secondary/50"
+                  selectedToken?.symbol === token?.symbol ? "bg-primary/10" : "hover:bg-secondary/50"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{token.icon}</span>
+                  <span className="text-2xl">
+                     <img className="w-8" src={token.logoURI} alt="icon" />
+                    </span>
                   <div className="text-left">
                     <div className="font-medium text-foreground">{token.symbol}</div>
                     <div className="text-sm text-muted-foreground">{token.name}</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-medium text-foreground">{token.balance}</div>
-                  <div className="text-sm text-muted-foreground">
+                  {/* <div className="font-medium text-foreground">{token.balance}</div> */}
+                  {/* <div className="text-sm text-muted-foreground">
                     $
                     {(
                       Number.parseFloat(token.balance.replace(/,/g, "")) *
                       (token.symbol === "ETH" ? 1850 : token.symbol === "WBTC" ? 43000 : 1)
                     ).toLocaleString()}
-                  </div>
+                  </div> */}
                 </div>
               </button>
             ))}

@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Search, TrendingUp, TrendingDown, ArrowUpDown } from "lucide-react"
-import { tokens, formatCurrency } from "@/lib/data"
+import { Search, ArrowUpDown } from "lucide-react"
+import { formatCurrency } from "@/lib/data"
 import BackgroundGlow from "@/global/BackgroundGlow"
 import Navbar from "@/global/Navbar"
 import { useGetAllPools } from "@/program-hooks/getPools"
@@ -18,18 +18,19 @@ export default function ExplorePage() {
   const [sortAsc, setSortAsc] = useState(false)
 
   // Mock price change data
-  const tokenData = tokens.map((t) => ({
-    ...t,
-    change24h: Math.random() * 20 - 10,
-    volume24h: Math.random() * 50000000,
-    tvl: Math.random() * 200000000,
-  }))
+  // const tokenData = tokens.map((t) => ({
+  //   ...t,
+  //   change24h: Math.random() * 20 - 10,
+  //   volume24h: Math.random() * 50000000,
+  //   tvl: Math.random() * 200000000,
+  // }))
 
-  const filteredTokens = tokenData.filter(
-    (t) =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  //Task - remember to come back to this and work on fetching the tokens
+  // const filteredTokens = tokenData.filter(
+  //   (t) =>
+  //     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     t.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
+  // )
 
   const filteredPools = pools.filter(
     (p) =>
@@ -315,7 +316,7 @@ export default function ExplorePage() {
                         {pool.reserves.formattedBalanceB.toFixed(4)} {pool.tokenB.symbol}
                       </td>
                       <td className="p-4 text-right font-medium text-foreground">
-                        ${pool.tvl.toFixed(2)}
+                        ${Number(pool.tvl.toFixed(2)).toLocaleString("en-US")}
                       </td>
                       <td className="p-4 text-right font-medium text-foreground hidden md:table-cell">
                         {formatCurrency(pool.volume24h)}

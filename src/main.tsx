@@ -10,7 +10,7 @@ const router = createBrowserRouter(routes)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <div className="dark">
+    <div className="dark w-full">
        <Providers>
       <RouterProvider router={router} />
       <Toaster />

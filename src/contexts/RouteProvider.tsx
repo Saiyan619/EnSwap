@@ -22,6 +22,9 @@ const routes: RouteObject[] = [
     path: "/pool/add/:poolId",
     element: <AddLiquidityPage />, 
   },{
+    path: "/pool/withdraw/:poolId",
+    element: <WithdrawLiquidityPage />, 
+  },{
     path: "/pool/withdraw",
     element: <WithdrawLiquidityPage />, 
   },{

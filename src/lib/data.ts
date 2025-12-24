@@ -1,13 +1,16 @@
-// Shared token and pool data for the entire app
+import { PublicKey } from "@solana/web3.js"
 
+// Shared token and pool data for the entire app
 export interface Token {
   symbol: string
   name: string
-  icon: string
-  balance: string
-  price: number 
-  mint: string
+  logoURI: string | undefined
+  supply: string
+  // price: number 
+  mint: PublicKey
+  decimals: number
 }
+
 
 export interface Pool {
   id: string
@@ -109,3 +112,6 @@ export function formatCurrency(value: number): string {
 export function formatNumber(value: number): string {
   return value.toLocaleString("en-US", { maximumFractionDigits: 2 })
 }
+
+
+

@@ -8,7 +8,7 @@ function App() {
     <div className="relative min-h-screen overflow-hidden">
       <BackgroundGlow />
     <Navbar />
-       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4">
+       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
         <SwapCard />
       </div>
     </div>

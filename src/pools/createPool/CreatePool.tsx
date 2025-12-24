@@ -5,9 +5,10 @@ import { Link } from "react-router-dom"
 import BackgroundGlow from "@/global/BackgroundGlow"
 import Navbar from "@/global/Navbar"
 import { TokenSelectModal } from "@/swap/components/TokenSelectModal"
-import { Token, tokens } from "@/lib/data"
+import { Token } from "@/lib/data"
 import { useInitializePool } from "@/program-hooks/initializePool"
 import { Spinner } from "@/components/ui/spinner"
+import { useAllTokens } from "@/program-hooks/allToken"
 
 const feeTiers = [
   { value: 0.01, label: "0.01%", description: "Best for stable pairs" },
@@ -17,7 +18,8 @@ const feeTiers = [
 ]
 
 export default function CreatePoolPage() {
-  const {initializeNewPool, data, isPending} = useInitializePool();
+  const {initializeNewPool, isPending} = useInitializePool();
+  const {tokens, isLoading} = useAllTokens();
   const [token0, setToken0] = useState<Token | null>(null)
   const [token1, setToken1] = useState<Token | null>(null)
   const [selectedFee, setSelectedFee] = useState(0.3)
@@ -52,12 +54,13 @@ export default function CreatePoolPage() {
       
     }
     const proposedPool = {
-      mintAddA: token0?.mint,
-      mintAddB:token1?.mint,
+      mintAddA: token0?.mint.toString(),
+      mintAddB: token1?.mint.toString(),
       fee: selectedFee
     }
-    console.log(proposedPool);
-    initializeNewPool(proposedPool)
+
+    initializeNewPool(proposedPool);
+
   }
 
   return (
@@ -100,7 +103,9 @@ export default function CreatePoolPage() {
               >
                 {token0 ? (
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{token0.icon}</span>
+                    <span className="text-xs">
+                      <img className="w-8" src={token0.logoURI} alt="icon" />
+                    </span>
                     <span className="font-semibold text-foreground">{token0.symbol}</span>
                   </div>
                 ) : (
@@ -115,7 +120,9 @@ export default function CreatePoolPage() {
               >
                 {token1 ? (
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{token1.icon}</span>
+                    <span className="text-xs">
+                      <img className="w-8" src={token1.logoURI} alt="icon" />
+                    </span>
                     <span className="font-semibold text-foreground">{token1.symbol}</span>
                   </div>
                 ) : (
@@ -148,7 +155,6 @@ export default function CreatePoolPage() {
             </div>
           </div>
 
-          {/* Create button */}
           {
             isPending ?
 

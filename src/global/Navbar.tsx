@@ -3,6 +3,7 @@ import { Wallet, Settings, MoreHorizontal } from "lucide-react"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui"
+import { Dropdown } from "./Dropdown"
 
 const navItems = [
   { label: "Swap", href: "/" },
@@ -11,7 +12,6 @@ const navItems = [
 ]
 
 export default function Navbar() {
-  const [connected, setConnected] = useState(false)
 
   return (
     <header className="glass sticky top-0 z-50 px-4 py-3">
@@ -45,13 +45,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
                   <WalletMultiButton />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-          >
-            <Settings className="w-5 h-5" />
-          </Button>
+         <div className="block sm:hidden"> <Dropdown /></div>
         </div>
       </div>
     </header>

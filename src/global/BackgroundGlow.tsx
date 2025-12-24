@@ -13,7 +13,7 @@ const BackgroundGlow = () => {
       />
       {/* Coral/orange accent */}
       <div
-        className="absolute bottom-[15%] right-[5%] w-[500px] h-[400px] rounded-full"
+        className="absolute bottom-[15%] right-[5%] w-[900px] h-[400px] rounded-full"
         style={{
           background: "radial-gradient(circle, rgba(234, 88, 12, 0.12) 0%, transparent 60%)",
           filter: "blur(70px)",

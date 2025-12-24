@@ -62,13 +62,11 @@ export const useGetAllPools = () => {
           const tokenAInfo = tokenMap.get(mintA.toString());
           const tokenBInfo = tokenMap.get(mintB.toString());
 
-          // Get mint details for decimals
           const [mintAData, mintBData] = await Promise.all([
             getMint(connection, mintA),
             getMint(connection, mintB),
           ]);
 
-          // Get reserve balances for both tokens
           const [balanceA, balanceB] = await Promise.all([
             getReserveBalance(connection, pool.account.tokenReserveA),
             getReserveBalance(connection, pool.account.tokenReserveB),
@@ -76,12 +74,12 @@ export const useGetAllPools = () => {
 
           // Calculate TVL (Total Value Locked)
           // Note: This assumes 1:1 USD value for simplicity
-          // In real app, you'd fetch token prices from an oracle
+          // Cant use real data cuz im on devnet so i just have to come up with something to fill space here
           const formattedBalanceA = balanceA / Math.pow(10, mintAData.decimals);
           const formattedBalanceB = balanceB / Math.pow(10, mintBData.decimals);
           
           // Mock TVL calculation (simplified)
-          const tvl = formattedBalanceA + formattedBalanceB; // Would need actual prices
+          const tvl = formattedBalanceA + formattedBalanceB; // again mock value
 
           const enrichedPool = {
             ...pool,
@@ -116,17 +114,10 @@ export const useGetAllPools = () => {
             apr: Math.random() * 50 + 5, // 5-55% APR
           };
 
-          // console.log(`Pool ${index + 1}: ${tokenAInfo?.symbol || "UNK"}/${tokenBInfo?.symbol || "UNK"}`, {
-          //   balanceA: enrichedPool.reserves.formattedBalanceA,
-          //   balanceB: enrichedPool.reserves.formattedBalanceB,
-          //   tvl: enrichedPool.tvl,
-          // });
-
           return enrichedPool;
         })
       );
 
-      console.log("\nFinal Enriched Pools:", enrichedPools);
       return enrichedPools;
     } catch (error) {
       console.error(" Error fetching pools:", error);
@@ -197,13 +188,11 @@ export const useGetSinglePool = (poolId:string | undefined) => {
 
           
           // Calculate TVL (Total Value Locked)
-          // Note: This assumes 1:1 USD value for simplicity
-          // In real app, you'd fetch token prices from an oracle
+          // Note: This assumes 1:1 USD value for simplicity - these are just mock im using for now
           const formattedBalanceA = balanceA / Math.pow(10, mintAData.decimals);
           const formattedBalanceB = balanceB / Math.pow(10, mintBData.decimals);
           
-          // Mock TVL calculation (simplified)
-          const tvl = formattedBalanceA + formattedBalanceB; // Would need actual prices
+          const tvl = formattedBalanceA + formattedBalanceB; 
 
           const enrichedPool = {
             ...poolData,
@@ -238,7 +227,6 @@ export const useGetSinglePool = (poolId:string | undefined) => {
             apr: Math.random() * 50 + 5, // 5-55% APR
           }
 
-          console.log(enrichedPool);
           return enrichedPool;
       } catch (error) {
         console.error(error)

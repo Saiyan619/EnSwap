@@ -3,16 +3,14 @@ import { useGetSinglePool } from "@/program-hooks/getPools";
 import { Link, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Plus, Minus, ExternalLink, TrendingUp } from "lucide-react"
-import { pools, formatCurrency, formatNumber } from "@/lib/data"
+import { formatCurrency, formatNumber } from "@/lib/data"
 import BackgroundGlow from "@/global/BackgroundGlow";
 import { PoolCharts } from "./components/PoolCharts";
 
 
 export default function PoolDetails() {
      const {poolId} = useParams();
-    console.log(poolId)
     const {data:pool} = useGetSinglePool(poolId);
-    console.log(pool)
 
   if (!pool) {
     return (
@@ -20,7 +18,7 @@ export default function PoolDetails() {
         <BackgroundGlow />
       <Navbar />
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <p className="text-center text-muted-foreground">Pool not found</p>
+          <p className="text-center text-muted-foreground">Please Wait....</p>
         </div>
       </main>
     )
@@ -78,7 +76,7 @@ export default function PoolDetails() {
                 <Button asChild variant="secondary" className="glass-light border-0">
                   {/* the apr should be the id i havnt found how to get the pool id 
                   thats why i used a random value not to get an error fix this later!! */}
-                  <Link to={`/pool/withdraw?pool=${pool.apr}`}>
+                  <Link to={`/pool/withdraw/${poolId}`}>
                     <Minus className="w-4 h-4 mr-2" />
                     Remove Liquidity
                   </Link>

@@ -1,32 +1,114 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
-import { ArrowLeft, AlertTriangle, Wallet } from "lucide-react"
-import { pools, formatCurrency } from "@/lib/data"
-import { Link, useSearchParams } from "react-router-dom"
+import { ArrowLeft, AlertTriangle, Wallet, Info, Check } from "lucide-react"
+import { Link, useParams } from "react-router-dom"
 import BackgroundGlow from "@/global/BackgroundGlow"
 import Navbar from "@/global/Navbar"
-
-const percentagePresets = [25, 50, 75, 100]
+import { useGetSinglePool } from "@/program-hooks/getPools"
+import { useWithdrawLiquidity } from "@/program-hooks/withdrawLiquidity"
+import { useConnection, useWallet } from "@solana/wallet-adapter-react"
+import { getAccount, getAssociatedTokenAddressSync, getMint, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 
 export default function WithdrawLiquidityPage() {
-  const [searchParams] = useSearchParams()
-  const poolId = searchParams.get("pool") || "eth-usdc"
-  const pool = pools.find((p) => p.id === poolId && p.myLiquidity) || pools[0]
+  const { poolId } = useParams()
+  const { data: pool } = useGetSinglePool(poolId)
+  const { withdrawNewLiquidity, isPending } = useWithdrawLiquidity()
+  const { connection } = useConnection()
+  const { publicKey } = useWallet()
 
-  const [percentage, setPercentage] = useState(50)
-  const [collectFees, setCollectFees] = useState(true)
+  const [lpTokenAmount, setLpTokenAmount] = useState("")
+  const [slippage, setSlippage] = useState(0.5)
+  const [userLpBalance, setUserLpBalance] = useState(0)
+  const [estimatedAmountA, setEstimatedAmountA] = useState(0)
+  const [estimatedAmountB, setEstimatedAmountB] = useState(0)
+  const [totalLpSupply, setTotalLpSupply] = useState(0)
+  // Fetch user's LP token balance
+  useEffect(() => {
+    const fetchLpBalance = async () => {
+      if (!pool || !publicKey) return
+      try {
+         const lpMintInfo = await getMint(connection, pool.lpMint)
+      const totalSupply = Number(lpMintInfo.supply) / Math.pow(10, lpMintInfo.decimals)
+             // Get user's LP token account (contains user's balance)
+      const userLpTokenAccount = await getAssociatedTokenAddressSync(
+        pool.lpMint,
+        publicKey,
+        false,
+        TOKEN_PROGRAM_ID
+      )
+      
+      const userLpAccount = await getAccount(connection, userLpTokenAccount)
+      const balance = Number(userLpAccount.amount) / Math.pow(10, lpMintInfo.decimals)
+      
+      setUserLpBalance(balance)
+      setTotalLpSupply(totalSupply) 
+      } catch (error) {
+        console.log("No LP tokens found")
+        setUserLpBalance(0)
+      }
+    }
+    fetchLpBalance()
+  }, [pool, publicKey, connection])
 
-  const myLiquidity = pool.myLiquidity || 12500
-  const withdrawAmount = (myLiquidity * percentage) / 100
+  // Calculate estimated withdrawals
+  useEffect(() => {
+    if (!pool || !lpTokenAmount || isNaN(parseFloat(lpTokenAmount))) {
+      setEstimatedAmountA(0)
+      setEstimatedAmountB(0)
+      return
+    }
 
-  // Mock fee earnings
-  const earnedFees0 = 0.042
-  const earnedFees1 = 78.5
+    const lpAmount = parseFloat(lpTokenAmount)
+    // Calculate proportional share
+    const shareOfPool = lpAmount / Number(totalLpSupply)
+    // Estimated amounts user will receive
+    const estimatedA = (lpAmount * pool.reserves.formattedBalanceA) / totalLpSupply
+  const estimatedB = (lpAmount * pool.reserves.formattedBalanceB) / totalLpSupply
+    setEstimatedAmountA(estimatedA)
+    setEstimatedAmountB(estimatedB)
+  }, [lpTokenAmount, pool])
 
-  // Calculate token amounts based on withdrawal percentage
-  const token0Amount = (3.2 * percentage) / 100
-  const token1Amount = (5920 * percentage) / 100
+  const handleWithdraw = () => {
+    if (!pool || !lpTokenAmount) return
+
+    const lpAmount = parseFloat(lpTokenAmount)
+    
+    // Calculate minimum amounts with slippage protection
+    const minAmountA = estimatedAmountA * (1 - slippage / 100)
+    const minAmountB = estimatedAmountB * (1 - slippage / 100)
+
+    const data = {
+      lp_tokens: lpAmount,
+      min_amount_a: minAmountA,
+      min_amount_b: minAmountB,
+      mint_a: pool.mintA,
+      mint_b: pool.mintB,
+    }
+
+    console.log("Withdraw data:", data)
+    withdrawNewLiquidity(data)
+  }
+
+  const setPercentage = (percent: number) => {
+    const amount = (userLpBalance * percent) / 100
+    setLpTokenAmount(amount.toString())
+  }
+
+  if (!pool) {
+    return (
+      <main className="relative min-h-screen">
+        <BackgroundGlow />
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <p className="text-center text-muted-foreground">Pool not found</p>
+        </div>
+      </main>
+    )
+  }
+
+  const withdrawPercentage = userLpBalance > 0 
+    ? (parseFloat(lpTokenAmount || "0") / userLpBalance) * 100 
+    : 0
 
   return (
     <main className="relative min-h-screen">
@@ -34,7 +116,7 @@ export default function WithdrawLiquidityPage() {
       <Navbar />
 
       <div className="max-w-xl mx-auto px-4 py-8">
-        {/* Back button and title */}
+        {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Link
             to="/pool"
@@ -45,152 +127,162 @@ export default function WithdrawLiquidityPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Remove Liquidity</h1>
             <p className="text-sm text-muted-foreground">
-              {pool.token0.symbol}/{pool.token1.symbol} · 0.3% fee tier
+              {pool.tokenA.symbol}/{pool.tokenB.symbol} · 0.3% fee tier
             </p>
           </div>
         </div>
 
-        {/* Position summary */}
+        {/* Your Position Summary */}
         <div className="glass-light rounded-xl p-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex -space-x-2">
-                <span className="text-xl w-8 h-8 flex items-center justify-center rounded-full bg-secondary">
-                  {pool.token0.icon}
-                </span>
-                <span className="text-xl w-8 h-8 flex items-center justify-center rounded-full bg-secondary">
-                  {pool.token1.icon}
-                </span>
+                <img src={pool.tokenA.logoURI} alt="token" className="w-8 h-8 rounded-full bg-secondary" />
+                <img src={pool.tokenB.logoURI} alt="token" className="w-8 h-8 rounded-full bg-secondary" />
               </div>
-              <p className="text-sm text-muted-foreground">Your position</p>
+              <p className="text-sm text-muted-foreground">Your LP Tokens</p>
             </div>
             <div className="flex items-center gap-2">
               <Wallet className="w-4 h-4 text-muted-foreground" />
-              <span className="font-semibold text-foreground">{formatCurrency(myLiquidity)}</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="glass rounded-xl p-3">
-              <p className="text-xs text-muted-foreground mb-1">Pooled {pool.token0.symbol}</p>
-              <p className="font-medium text-foreground">3.2 {pool.token0.symbol}</p>
-              <p className="text-xs text-muted-foreground">${(3.2 * pool.token0.price).toLocaleString()}</p>
-            </div>
-            <div className="glass rounded-xl p-3">
-              <p className="text-xs text-muted-foreground mb-1">Pooled {pool.token1.symbol}</p>
-              <p className="font-medium text-foreground">5,920 {pool.token1.symbol}</p>
-              <p className="text-xs text-muted-foreground">${(5920 * pool.token1.price).toLocaleString()}</p>
+              <span className="font-semibold text-foreground">{userLpBalance.toFixed(6)}</span>
             </div>
           </div>
         </div>
 
-        {/* Main card */}
+        {/* Main Card */}
         <div className="glass rounded-3xl p-6 space-y-6">
-          {/* Percentage selector */}
+          {/* LP Token Input */}
           <div>
-            <label className="text-sm text-muted-foreground mb-3 block">Amount to remove</label>
-
-            <div className="glass-light rounded-2xl p-6 mb-4">
-              <div className="text-center mb-4">
-                <span className="text-5xl font-bold text-foreground">{percentage}%</span>
+            <label className="text-sm text-muted-foreground mb-3 block">LP Tokens to Burn</label>
+            <div className="glass-light rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Amount</span>
+                <span className="text-sm text-muted-foreground">
+                  Balance: {userLpBalance.toFixed(6)}
+                </span>
               </div>
-              <Slider
-                value={[percentage]}
-                onValueChange={(values) => setPercentage(values[0])}
-                min={0}
-                max={100}
-                step={1}
-                className="w-full mb-4"
-              />
-              <div className="flex gap-2">
-                {percentagePresets.map((preset) => (
+              <div className="flex items-center justify-between gap-3">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={lpTokenAmount}
+                  onChange={(e) => setLpTokenAmount(e.target.value)}
+                  className="flex-1 bg-transparent text-2xl font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setLpTokenAmount(userLpBalance.toString())}
+                  className="text-xs"
+                >
+                  MAX
+                </Button>
+              </div>
+              
+              {/* Quick percentage buttons */}
+              <div className="flex gap-2 mt-4">
+                {[25, 50, 75, 100].map((percent) => (
                   <button
-                    key={preset}
-                    onClick={() => setPercentage(preset)}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      percentage === preset
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary/50 text-foreground hover:bg-secondary"
+                    key={percent}
+                    onClick={() => setPercentage(percent)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${
+                      Math.abs(withdrawPercentage - percent) < 1
+                        ? "bg-amber-500 text-white"
+                        : "glass-light text-foreground hover:bg-secondary/50"
                     }`}
                   >
-                    {preset}%
+                    {percent}%
                   </button>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* You will receive */}
+          {/* Slippage Settings */}
           <div>
-            <label className="text-sm text-muted-foreground mb-3 block">You will receive</label>
-            <div className="space-y-3">
-              <div className="glass-light rounded-2xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{pool.token0.icon}</span>
-                  <span className="font-medium text-foreground">{pool.token0.symbol}</span>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-foreground">{token0Amount.toFixed(4)}</p>
-                  <p className="text-sm text-muted-foreground">
-                    ~${(token0Amount * pool.token0.price).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="glass-light rounded-2xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{pool.token1.icon}</span>
-                  <span className="font-medium text-foreground">{pool.token1.symbol}</span>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-foreground">{token1Amount.toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">
-                    ~${(token1Amount * pool.token1.price).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Collect fees toggle */}
-          <div className="glass-light rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="font-medium text-foreground">Collect earned fees</p>
-                <p className="text-sm text-muted-foreground">Withdraw accumulated trading fees</p>
-              </div>
-              <button
-                onClick={() => setCollectFees(!collectFees)}
-                className={`w-12 h-6 rounded-full transition-colors ${
-                  collectFees ? "bg-primary" : "bg-secondary"
-                } relative`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
-                    collectFees ? "translate-x-6" : "translate-x-0.5"
+            <label className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              Slippage Protection
+              <Info className="w-4 h-4" />
+            </label>
+            <div className="flex gap-2">
+              {[0.1, 0.5, 1.0, 3.0].map((value) => (
+                <button
+                  key={value}
+                  onClick={() => setSlippage(value)}
+                  className={`flex-1 px-3 py-2 rounded-xl transition-all ${
+                    slippage === value
+                      ? "bg-amber-500 text-white font-medium"
+                      : "glass-light text-foreground hover:bg-secondary/50"
                   }`}
-                />
-              </button>
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    {slippage === value && <Check className="w-4 h-4" />}
+                    {value}%
+                  </div>
+                </button>
+              ))}
             </div>
-            {collectFees && (
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/50">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Earned {pool.token0.symbol}</p>
-                  <p className="font-medium text-emerald-400">+{earnedFees0}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Earned {pool.token1.symbol}</p>
-                  <p className="font-medium text-emerald-400">+{earnedFees1}</p>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Warning */}
-          {percentage === 100 && (
+          {/* You Will Receive */}
+          {lpTokenAmount && parseFloat(lpTokenAmount) > 0 && (
+            <>
+              <div>
+                <label className="text-sm text-muted-foreground mb-3 block">You will receive (estimated)</label>
+                <div className="space-y-3">
+                  <div className="glass-light rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img src={pool.tokenA.logoURI} alt="token" className="w-8 h-8 rounded-full" />
+                      <span className="font-medium text-foreground">{pool.tokenA.symbol}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">{Number(estimatedAmountA.toFixed(6))}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Min: {(estimatedAmountA * (1 - slippage / 100)).toFixed(6)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="glass-light rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img src={pool.tokenB.logoURI} alt="token" className="w-8 h-8 rounded-full" />
+                      <span className="font-medium text-foreground">{pool.tokenB.symbol}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">{estimatedAmountB.toFixed(6)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Min: {(estimatedAmountB * (1 - slippage / 100)).toFixed(6)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transaction Summary */}
+              <div className="glass-light rounded-2xl p-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">LP Tokens to Burn</span>
+                  <span className="font-semibold text-foreground">{parseFloat(lpTokenAmount).toFixed(6)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Share of Pool</span>
+                  <span className="text-foreground">{withdrawPercentage.toFixed(2)}%</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Slippage Tolerance</span>
+                  <span className="text-foreground">{slippage}%</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Warning for 100% withdrawal */}
+          {withdrawPercentage >= 99 && lpTokenAmount && (
             <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm text-amber-400 font-medium">Removing 100% of liquidity</p>
+                <p className="text-sm text-amber-400 font-medium">Removing all liquidity</p>
                 <p className="text-sm text-amber-400/80">
                   You will close this position entirely and stop earning fees.
                 </p>
@@ -198,32 +290,17 @@ export default function WithdrawLiquidityPage() {
             </div>
           )}
 
-          {/* Summary */}
-          <div className="glass-light rounded-2xl p-4 space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total withdrawal value</span>
-              <span className="font-semibold text-foreground">{formatCurrency(withdrawAmount)}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Remaining position</span>
-              <span className="text-foreground">{formatCurrency(myLiquidity - withdrawAmount)}</span>
-            </div>
-            {collectFees && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Fees to collect</span>
-                <span className="text-emerald-400">
-                  +${(earnedFees0 * pool.token0.price + earnedFees1 * pool.token1.price).toFixed(2)}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Remove button */}
+          {/* Withdraw Button */}
           <Button
-            disabled={percentage === 0}
-            className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl disabled:opacity-50"
+            onClick={handleWithdraw}
+            disabled={!lpTokenAmount || parseFloat(lpTokenAmount) <= 0 || isPending}
+            className="w-full h-14 text-lg font-semibold bg-amber-500 hover:bg-amber-600 text-primary-foreground rounded-2xl disabled:opacity-50"
           >
-            {percentage === 0 ? "Select amount" : `Remove ${percentage}% Liquidity`}
+            {isPending 
+              ? "Withdrawing..." 
+              : !lpTokenAmount || parseFloat(lpTokenAmount) <= 0
+              ? "Enter LP token amount"
+              : `Remove Liquidity`}
           </Button>
         </div>
       </div>

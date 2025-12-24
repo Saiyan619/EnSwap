@@ -11,6 +11,7 @@ import { PublicKey, SystemProgram } from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
+  getMint,
 } from "@solana/spl-token";
 import { toast } from "sonner";
 
@@ -26,6 +27,7 @@ export const useAddLiquidity = () => {
   const wallet = useAnchorWallet();
   const { connection } = useConnection();
   const { publicKey } = useWallet();
+  
   const addLiquidity = async ({
     max_amount_a,
     max_amount_b,
@@ -36,7 +38,7 @@ export const useAddLiquidity = () => {
     if (!wallet || !publicKey) {
       throw new Error("Wallet not connected!!");
     }
-
+    
     const provider = new AnchorProvider(connection, wallet, {
       commitment: "confirmed",
     });
@@ -44,80 +46,114 @@ export const useAddLiquidity = () => {
     const programId = new PublicKey(idl.address);
     const mintAPubkey = new PublicKey(mint_a);
     const mintBPubkey = new PublicKey(mint_b);
+    
     try {
+      // Get mint info to fetch decimals
+      const mintAInfo = await getMint(connection, mintAPubkey);
+      const mintBInfo = await getMint(connection, mintBPubkey);
+      
+      const decimalsA = mintAInfo.decimals;
+      const decimalsB = mintBInfo.decimals;
+      
+      console.log('=== ADD LIQUIDITY DEBUG ===');
+      console.log('Amount A (human):', max_amount_a);
+      console.log('Amount B (human):', max_amount_b);
+      console.log('Decimals A:', decimalsA);
+      console.log('Decimals B:', decimalsB);
+      
+      // Convert to raw amounts (multiply by 10^decimals)
+      const rawAmountA = Math.floor(max_amount_a * Math.pow(10, decimalsA));
+      const rawAmountB = Math.floor(max_amount_b * Math.pow(10, decimalsB));
+      
+      console.log('Raw Amount A:', rawAmountA);
+      console.log('Raw Amount B:', rawAmountB);
+      console.log('Min LP Tokens:', min_lp_tokens);
+      console.log('==========================');
+      
       const [poolPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("pool"), mintAPubkey.toBuffer(), mintBPubkey.toBuffer()],
         programId
       );
-
+      
       const userTokenA = await getAssociatedTokenAddressSync(
         mintAPubkey,
         publicKey,
         false,
         TOKEN_PROGRAM_ID
       );
+      
       const userTokenB = await getAssociatedTokenAddressSync(
         mintBPubkey,
         publicKey,
         false,
         TOKEN_PROGRAM_ID
       );
-
+      
       const [tokenReserveAPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("reserve_a"), poolPDA.toBuffer()],
         programId
       );
+      
       const [tokenReserveBPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("reserve_b"), poolPDA.toBuffer()],
         programId
       );
+      
       const [lpMintPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("lp_mint"), poolPDA.toBuffer()],
         programId
       );
-
+      
       const [poolAuthorityPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("authority"), poolPDA.toBuffer()],
         programId
       );
-
-      console.log("sending transaction to add liqudity.........");
-
-      const tx = await program.methods.addLiquidity(new BN(max_amount_a), new BN(max_amount_b), new BN(min_lp_tokens)).accounts({
-        mintA: mintAPubkey,
-            mintB: mintBPubkey,
-            pool: poolPDA,
-            lpMint: lpMintPDA,
-            userTokenA:userTokenA,
-            userTokenB:userTokenB,
-            tokenReserveA: tokenReserveAPDA,
-            tokenReserveB: tokenReserveBPDA,
-            poolAuthority: poolAuthorityPDA,
-            signer: publicKey,
-            systemProgram: SystemProgram.programId,
-            tokenProgram: TOKEN_PROGRAM_ID
-      }).rpc();
-      console.log("transaction", tx);
-      return tx    
+      
+      console.log("Sending transaction to add liquidity...");
+      
+      // Use raw amounts (with decimals applied)
+      const tx = await program.methods
+        .addLiquidity(
+          new BN(rawAmountA),  
+          new BN(rawAmountB),
+          new BN(min_lp_tokens)
+        )
+        .accounts({
+          mintA: mintAPubkey,
+          mintB: mintBPubkey,
+          pool: poolPDA,
+          lpMint: lpMintPDA,
+          userTokenA: userTokenA,
+          userTokenB: userTokenB,
+          tokenReserveA: tokenReserveAPDA,
+          tokenReserveB: tokenReserveBPDA,
+          poolAuthority: poolAuthorityPDA,
+          signer: publicKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID
+        })
+        .rpc();
+            return tx;
     } catch (error) {
       throw error;
     }
   };
-
-  const {mutateAsync:addNewLiquidity, isPending} = useMutation({
+  
+  const { mutateAsync: addNewLiquidity, isPending } = useMutation({
     mutationFn: addLiquidity,
-     onSuccess:(data)=>{
-                toast.success("Pool Created Successfully!", {
-                    description: `Transaction: ${data}L`,
-                    action: {
-                        label: "View on Explorer",
-                        onClick: () => window.open(`https://explorer.solana.com/tx/${data}?cluster=devnet`, '_blank')
-                    }
-                });
-            },
-            onError:(error:Error)=>{
-                 toast.error(`Failed to create pool. Please try again.: ${error.message}`);
-            }
+    onSuccess: (data) => {
+      toast.success("Pool Funded Successfully!", {
+        description: `Transaction: ${data}`,
+        action: {
+          label: "View on Explorer",
+          onClick: () => window.open(`https://explorer.solana.com/tx/${data}?cluster=devnet`, '_blank')
+        }
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to fund pool: ${error.message}`);
+    }
   });
-  return{addNewLiquidity, isPending};
+  
+  return { addNewLiquidity, isPending };
 };

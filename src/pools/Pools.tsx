@@ -1,15 +1,14 @@
 import { Button } from "@/components/ui/button"
-import { Plus, Search } from "lucide-react"
+import { Plus } from "lucide-react"
 import BackgroundGlow from "@/global/BackgroundGlow"
 import { PoolCard } from "./components/PoolCard"
 import { Link } from "react-router-dom"
-import { pools } from "@/lib/data"
 import Navbar from "@/global/Navbar"
+import { useUserPositions } from "@/program-hooks/userPositions"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function PoolPage() {
-  const myPools = pools.filter((p) => p.myLiquidity)
-  const allPools = pools
-
+  const {data} = useUserPositions()
   return (
     <main className="relative min-h-screen">
       <BackgroundGlow />
@@ -30,19 +29,26 @@ export default function PoolPage() {
         </div>
 
         {/* My positions section */}
-        {myPools.length > 0 && (
+        {data ? (
           <section className="mb-10">
             <h2 className="text-xl font-semibold text-foreground mb-4">Your Positions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {myPools.map((pool) => (
-                <PoolCard key={pool.id} pool={pool} />
+              {data.map((pool) => (
+                <PoolCard key={pool.poolId} pool={pool} />
               ))}
             </div>
           </section>
+        ) : (
+           <div className="flex items-center gap-5 flex-row flex-wrap">
+      <Skeleton className="h-[225px] w-[250px] sm:w-[250px] rounded-xl" />
+        <Skeleton className="h-[225px] w-[250px] sm:w-[250px] rounded-xl" />
+        <Skeleton className="h-[225px] w-[250px] sm:w-[250px] rounded-xl" />
+        <Skeleton className="h-[225px] w-[250px] sm:w-[250px] rounded-xl" />
+    </div>
         )}
 
         {/* Top pools section */}
-        <section>
+        {/* <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-foreground">Top Pools</h2>
             <div className="relative">
@@ -59,7 +65,7 @@ export default function PoolPage() {
               <PoolCard key={pool.id} pool={pool} />
             ))}
           </div>
-        </section>
+        </section> */}
       </div>
     </main>
   )

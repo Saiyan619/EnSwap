@@ -97,7 +97,6 @@ export const useInitializePool = () => {
             tokenProgram: TOKEN_PROGRAM_ID
         }).rpc();
 
-        console.log("transaction succesful", tx);
         return { tx, poolRent }
         } catch (error: unknown) {
             const err = error as Error & {
